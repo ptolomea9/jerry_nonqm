@@ -4,93 +4,101 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **Jerry Non-QM List App** — a Flask web application for AE outreach to Texas Non-QM (Non-Qualified Mortgage) lending brokers. The dataset ranks 500 loan officers and branch managers by origination volume, enriched with company websites, social media profiles, and email addresses.
+**Jerry Non-QM List App** — Flask web application for AE outreach to Texas Non-QM (Non-Qualified Mortgage) lending brokers. 500 loan officers ranked by origination volume, enriched with company websites, social media profiles, and email addresses.
 
 ## Tech Stack
 
-- **Backend:** Flask 3.1 + raw sqlite3 + Jinja2
-- **Frontend:** Tailwind CSS (CDN) + vanilla JS
-- **Database:** SQLite at `data/jerry_outreach.db`
-- **No build step, no npm, no SPA framework**
+- **Backend:** Flask 3.1 + raw sqlite3 + Jinja2 (app factory pattern)
+- **Frontend:** Tailwind CSS (CDN) + vanilla JS — no build step, no npm, no SPA
+- **Database:** SQLite at `data/jerry_outreach.db` (WAL mode, foreign keys enabled)
+- **Deployment:** Railway (auto-deploys on push to `main`)
+- **Remote:** https://github.com/ptolomea9/jerry_nonqm.git
 
 ## Running the App
 
 ```bash
-python import_csv.py    # Seed database from enriched CSV
+python import_csv.py    # Seed database from enriched CSV + message templates
 python app.py           # Start server at http://localhost:5000
 ```
 
-## Data Enrichment Pipeline
+On Railway, `app.py:create_app()` auto-seeds if the leads table is empty (first deploy).
 
-The data goes through 4 stages. Each script is resumable via JSON caches.
+## Architecture
 
-| Stage | Script | Input | Output | Cache |
-|-------|--------|-------|--------|-------|
-| Raw data | — | MortgageMetrix export | `TX-NON-Qm-Lending-Brokers.csv` | — |
-| Phase 1: URLs | `lookup_urls.py` | Raw CSV | `TX-NON-Qm-Lending-Brokers-Enriched.csv` | `url_cache.json` |
-| Phase 2: Socials | `scrape_socials.py` | Enriched CSV | `TX-NON-Qm-Lending-Brokers-Final.csv` | `social_cache.json` |
-| Phase 2.5: Emails | `scrape_emails.py` | Final CSV | Final CSV (updated in place) | `email_cache.json` |
+### App Factory (`app.py`)
 
-**Run order:** `lookup_urls.py` → `scrape_socials.py` → `scrape_emails.py` → `import_csv.py`
+`create_app()` initializes the app: runs `init_db()` for schema/migrations, auto-seeds on empty DB, registers teardown, then registers 7 blueprints.
 
-### Enrichment methods
+### Blueprints (7 routes modules)
 
-**URL lookup** (`lookup_urls.py`): DuckDuckGo search for company official website. Filters aggregator/directory sites. 94% match rate.
+| Blueprint | File | Key Routes |
+|-----------|------|------------|
+| dashboard | `routes/dashboard.py` | `/dashboard` (stats), `/dashboard/export` (CSV) |
+| leads | `routes/leads.py` | `/leads` (filterable table, search, pagination at 25/page) |
+| lists | `routes/lists.py` | `/lists` (index), `/lists/upload` (CSV import), `/lists/<id>/enrich` (trigger pipeline) |
+| flyers | `routes/flyers.py` | `/flyers` (upload/preview/delete images) |
+| templates | `routes/templates.py` | `/templates` (CRUD for message templates with merge fields) |
+| outreach | `routes/outreach.py` | `/outreach/setup`, `/outreach/start`, `/outreach/session/<id>` |
+| api | `routes/api.py` | `/api/outreach/log` (AJAX send/skip), `/api/outreach/back`, `/api/lists/<id>/status` (enrichment polling) |
 
-**Social scraping** (`scrape_socials.py`): Visits each company website, extracts social links from `<a>` tags + regex on raw HTML. Platforms: Facebook, LinkedIn, Instagram, Twitter/X, YouTube, TikTok.
+### Database Layer (`models.py`)
 
-**Email scraping** (`scrape_emails.py`): Three methods per company website:
-1. `mailto:` links in HTML (highest confidence)
-2. Crawl `/contact`, `/contact-us`, `/about`, `/about-us` subpages
-3. Regex email extraction from raw HTML (filtered against junk domains)
-4. For companies with NO website: DuckDuckGo search fallback
+- `get_db()` — request-scoped connection via Flask `g` object, `sqlite3.Row` factory
+- `query_db()` — convenience SELECT helper with `one=True` option
+- `init_db()` — creates 7 tables from `SCHEMA` string, runs column migrations
+- Schema changes: add columns via `ALTER TABLE` in `init_db()`, guarded by `PRAGMA table_info` check
 
-### In-app enrichment
+### Key Data Patterns
 
-The web app has a built-in enrichment pipeline (`enrichment/pipeline.py`) that can be triggered from the Lists page. When an AE uploads a raw CSV without website/social columns, clicking "Enrich Data" runs all three stages as a background thread. The list detail page polls for progress updates every 5 seconds.
+- **Leads** are uniquely keyed by `nmlsid`. CSV uploads use `ON CONFLICT(nmlsid) DO UPDATE` for upserts.
+- **Lists ↔ Leads** is many-to-many via `list_leads` junction table.
+- **Outreach sessions** store the lead queue as a JSON array of IDs in a TEXT column. `current_index` tracks position; the queue is never modified — only the index advances or retreats.
+- **Enrichment status** on lists: `none` → `enriching_urls` → `enriching_socials` → `enriching_emails` → `complete` (or `error`).
+- **Message templates** support merge fields: `{name}`, `{company}`, `{city}`, `{rank}`, `{volume}`. Rendered server-side on page load and client-side on AJAX lead advance.
 
-## Data
+### Outreach Session Flow
 
-### CSV Files
+1. Setup page: AE picks list + flyer + platform + template
+2. `/outreach/start` queries eligible leads (have platform URL + not yet contacted) → creates session with lead_queue JSON
+3. Session page shows one lead at a time. "Open Profile" opens social URL in new tab.
+4. Sent/Skip → AJAX POST to `/api/outreach/log` → inserts log, increments index, returns next lead JSON
+5. Back → AJAX POST to `/api/outreach/back` → deletes last log, decrements index
+6. Keyboard shortcuts: `S` = sent, `X` = skip, `O` = open profile, `M` = copy message, `C` = copy flyer, `B` = back
+7. All DOM updates via vanilla JS in `static/js/outreach.js` (IIFE pattern)
 
-| File | Description |
-|------|-------------|
-| `TX-NON-Qm-Lending-Brokers.csv` | Original MortgageMetrix export (500 rows, 18 columns) |
-| `TX-NON-Qm-Lending-Brokers-Enriched.csv` | After Phase 1: +Company Website column |
-| `TX-NON-Qm-Lending-Brokers-Final.csv` | After Phase 2 & 2.5: +Facebook, LinkedIn, Instagram, Twitter/X, YouTube, TikTok, Email |
+### Enrichment Pipeline (`enrichment/pipeline.py`)
 
-### Database Schema (6 tables)
+Background thread spawned from `/lists/<id>/enrich`. Three stages, each with JSON cache for resumability:
 
-- **leads** — One row per NMLSID, all CSV columns + enrichment data
-- **lists** — Uploaded CSV campaign segments
-- **list_leads** — Many-to-many junction table
-- **flyers** — Uploaded flyer images
-- **outreach_sessions** — Batch: list + flyer + platform, lead queue as JSON
-- **outreach_logs** — One row per send/skip action with timestamp
+1. **URL lookup** — DuckDuckGo search for company website (`lookup_urls.py`, cache: `url_cache.json`)
+2. **Social scraping** — crawl websites for social links (`scrape_socials.py`, cache: `social_cache.json`)
+3. **Email scraping** — mailto links, contact page crawl, regex extraction (`scrape_emails.py`, cache: `email_cache.json`)
 
-## Web App Pages
+Frontend polls `/api/lists/<id>/status` every 5 seconds; reloads page on completion.
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| Dashboard | `/dashboard` | Stats, social coverage, recent activity, CSV export |
-| Lead Browser | `/leads` | Filterable table with social badges (green=available, gray=missing) |
-| Lists | `/lists` | Upload CSVs, view segments, trigger enrichment |
-| Flyers | `/flyers` | Upload/preview/delete flyer images |
-| Outreach Setup | `/outreach/setup` | Pick list + flyer + platform |
-| Outreach Session | `/outreach/session/<id>` | One lead at a time: Open Profile → Sent/Skip → auto-advance |
-| Session Summary | `/outreach/session/<id>/summary` | Completion stats |
+### Template Inheritance
 
-### Outreach Workflow
+`templates/base.html` — Tailwind CDN, indigo navbar, flash messages. All pages extend this. Template directories mirror blueprint names: `templates/leads/`, `templates/lists/`, `templates/outreach/`, etc. `{% block scripts %}` for page-specific JS.
 
-1. AE selects list, flyer, and platform on setup page
-2. App queries leads with that platform available + not yet contacted
-3. Session page shows one lead at a time with progress bar
-4. "Open Profile" opens social URL in new tab; AE sends DM manually
-5. Thumbs up (sent) or thumbs down (skip) logs the action
-6. AJAX advances to next lead without page reload
-7. Keyboard shortcuts: `S` = sent, `X` = skip, `O` = open profile
+## Data Pipeline (offline scripts)
 
-## Repository
+Run order: `lookup_urls.py` → `scrape_socials.py` → `scrape_emails.py` → `import_csv.py`
 
-- **Remote:** https://github.com/ptolomea9/jerry_nonqm.git
-- **Default branch:** main
+| Script | Input | Output | Cache |
+|--------|-------|--------|-------|
+| `lookup_urls.py` | Raw CSV | `TX-NON-Qm-Lending-Brokers-Enriched.csv` | `url_cache.json` |
+| `scrape_socials.py` | Enriched CSV | `TX-NON-Qm-Lending-Brokers-Final.csv` | `social_cache.json` |
+| `scrape_emails.py` | Final CSV | Final CSV (updated in place) | `email_cache.json` |
+| `import_csv.py` | Final CSV | SQLite DB + message templates | — |
+
+`import_csv.py` also seeds 40 prefab message templates (8 Instagram, 8 LinkedIn, 8 Facebook, 8 TikTok, 8 Email). Seed is idempotent — only inserts templates not already present by name+platform.
+
+## CSV Column Mapping
+
+`COLUMN_MAP` in `import_csv.py` maps CSV headers → DB columns. Reused by `routes/lists.py` for uploads. Upload auto-detects enrichment status: if CSV has "Company Website" AND "Facebook" columns → `complete`, otherwise `none`.
+
+## File Uploads
+
+- Flyers: `uploads/flyers/` (images/PDFs, UUID-prefixed filenames)
+- CSVs: `uploads/csv/` (UUID-prefixed)
+- Config: `config.py` defines allowed extensions and 16MB size limit
