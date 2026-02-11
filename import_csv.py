@@ -60,7 +60,8 @@ def import_csv(csv_path=INPUT_CSV):
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
 
-    db_columns = list(col_indices.values())
+    sorted_indices = sorted(col_indices.keys())
+    db_columns = [col_indices[idx] for idx in sorted_indices]
     placeholders = ", ".join(["?"] * len(db_columns))
     col_names = ", ".join(db_columns)
 

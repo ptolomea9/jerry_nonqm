@@ -57,6 +57,11 @@ JUNK_DOMAINS = {
     "fontawesome.com", "gstatic.com",
     "yourdomain.com", "domain.com", "email.com",
     "company.com", "yourcompany.com", "sampledomain.com",
+    "godaddy.com", "gmail.com", "yahoo.com", "hotmail.com",
+    "outlook.com", "aol.com", "icloud.com",
+    "indiantypefoundry.com", "lab6.com",
+    "squarespace.com", "shopify.com", "hubspot.com",
+    "mailchimp.com", "constantcontact.com",
 }
 
 # Junk email prefixes (generic/noreply addresses to deprioritize)
@@ -88,9 +93,10 @@ def is_junk_email(email: str) -> bool:
     email_lower = email.lower()
     local, _, domain = email_lower.partition("@")
 
-    # Filter junk domains
-    if domain in JUNK_DOMAINS:
-        return True
+    # Filter junk domains (exact match or subdomain match)
+    for junk in JUNK_DOMAINS:
+        if domain == junk or domain.endswith("." + junk):
+            return True
 
     # Filter image/file extensions mistaken as emails
     if domain.endswith((".png", ".jpg", ".jpeg", ".gif", ".svg", ".css", ".js")):
@@ -280,7 +286,7 @@ def main():
         website = row[url_col_idx] if len(row) > url_col_idx else ""
         company = row[company_col_idx] if len(row) > company_col_idx else ""
         key = website if website else f"__no_website__{company}"
-        emails = cache.get(key, [])
+        emails = [e for e in cache.get(key, []) if not is_junk_email(e)]
         best_email = emails[0] if emails else ""
 
         if email_col_idx is not None:
