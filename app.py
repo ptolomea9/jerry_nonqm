@@ -1,3 +1,5 @@
+import os
+import sqlite3
 from flask import Flask
 import config
 from models import init_db, close_db
@@ -10,6 +12,14 @@ def create_app():
 
     # Initialize database
     init_db()
+
+    # Auto-seed if leads table is empty (first deploy on Railway)
+    conn = sqlite3.connect(config.DATABASE)
+    count = conn.execute("SELECT COUNT(*) FROM leads").fetchone()[0]
+    conn.close()
+    if count == 0:
+        from import_csv import import_csv
+        import_csv()
 
     # Register teardown
     app.teardown_appcontext(close_db)
