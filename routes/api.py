@@ -79,6 +79,71 @@ def log_action():
     })
 
 
+@bp.route("/api/outreach/back", methods=["POST"])
+def go_back():
+    data = request.get_json()
+    session_id = data.get("session_id")
+
+    if not session_id:
+        return jsonify({"error": "Missing session_id"}), 400
+
+    sess = query_db("SELECT * FROM outreach_sessions WHERE id = ?", (session_id,), one=True)
+    if not sess:
+        return jsonify({"error": "Session not found"}), 404
+
+    current_index = sess["current_index"]
+    if current_index <= 0:
+        return jsonify({"error": "Already at the first lead"}), 400
+
+    lead_queue = json.loads(sess["lead_queue"])
+    prev_index = current_index - 1
+    prev_lead_id = lead_queue[prev_index]
+
+    db = get_db()
+
+    # Delete the most recent log for this lead in this session
+    db.execute(
+        """DELETE FROM outreach_logs WHERE id = (
+            SELECT id FROM outreach_logs
+            WHERE session_id = ? AND lead_id = ?
+            ORDER BY timestamp DESC LIMIT 1
+        )""",
+        (session_id, prev_lead_id),
+    )
+
+    # Move index back
+    db.execute(
+        "UPDATE outreach_sessions SET current_index = ?, status = 'active' WHERE id = ?",
+        (prev_index, session_id),
+    )
+    db.commit()
+
+    lead = query_db("SELECT * FROM leads WHERE id = ?", (prev_lead_id,), one=True)
+
+    platform = sess["platform"]
+    platform_col_map = {
+        "facebook": "facebook", "linkedin": "linkedin",
+        "instagram": "instagram", "twitter_x": "twitter_x",
+        "youtube": "youtube", "tiktok": "tiktok", "email": "email",
+    }
+    col = platform_col_map.get(platform, platform)
+    profile_url = lead[col] if lead and col in lead.keys() else ""
+
+    return jsonify({
+        "lead": {
+            "id": lead["id"],
+            "name": lead["name"],
+            "company": lead["company"],
+            "city": lead["city"],
+            "volume": lead["volume"],
+            "rank": lead["rank"],
+            "profile_url": profile_url,
+        },
+        "current": prev_index + 1,
+        "total": len(lead_queue),
+    })
+
+
 @bp.route("/api/lists/<int:list_id>/status")
 def list_status(list_id):
     lst = query_db("SELECT * FROM lists WHERE id = ?", (list_id,), one=True)

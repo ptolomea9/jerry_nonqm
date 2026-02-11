@@ -2,9 +2,83 @@
 {% block title %}Lead Browser - Jerry Non-QM{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Lead Browser</h1>
-    <p class="text-sm text-gray-500">{{ total }} leads found</p>
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Lead Browser</h1>
+        <p class="text-sm text-gray-500">{{ total }} leads found</p>
+    </div>
+    <button onclick="document.getElementById('add-lead-form').classList.toggle('hidden')"
+            class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500">
+        + Add Lead
+    </button>
+</div>
+
+<!-- Add Lead Form (hidden by default) -->
+<div id="add-lead-form" class="hidden mb-6 rounded-lg bg-white p-4 shadow">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Add Lead Manually</h2>
+    <form method="post" action="{{ url_for('leads.add_lead') }}">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+                <input type="text" name="name" required
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Company</label>
+                <input type="text" name="company"
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">City</label>
+                <input type="text" name="city"
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                <input type="email" name="email"
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Facebook URL</label>
+                <input type="url" name="facebook" placeholder="https://facebook.com/..."
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">LinkedIn URL</label>
+                <input type="url" name="linkedin" placeholder="https://linkedin.com/..."
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Instagram URL</label>
+                <input type="url" name="instagram" placeholder="https://instagram.com/..."
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Twitter/X URL</label>
+                <input type="url" name="twitter_x" placeholder="https://x.com/..."
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">YouTube URL</label>
+                <input type="url" name="youtube" placeholder="https://youtube.com/..."
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">TikTok URL</label>
+                <input type="url" name="tiktok" placeholder="https://tiktok.com/..."
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                Save Lead
+            </button>
+            <button type="button" onclick="document.getElementById('add-lead-form').classList.add('hidden')"
+                    class="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">
+                Cancel
+            </button>
+        </div>
+    </form>
 </div>
 
 <!-- Filters -->

@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request
-from models import query_db
+import time
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from models import get_db, query_db
 
 bp = Blueprint("leads", __name__)
 
@@ -73,3 +74,45 @@ def index():
         sort=sort,
         cities=cities,
     )
+
+
+@bp.route("/leads/add", methods=["POST"])
+def add_lead():
+    name = request.form.get("name", "").strip()
+    company = request.form.get("company", "").strip()
+    city = request.form.get("city", "").strip()
+    email = request.form.get("email", "").strip()
+    facebook = request.form.get("facebook", "").strip()
+    linkedin = request.form.get("linkedin", "").strip()
+    instagram = request.form.get("instagram", "").strip()
+    twitter_x = request.form.get("twitter_x", "").strip()
+    youtube = request.form.get("youtube", "").strip()
+    tiktok = request.form.get("tiktok", "").strip()
+
+    if not name:
+        flash("Name is required.", "error")
+        return redirect(url_for("leads.index"))
+
+    nmlsid = f"MANUAL-{int(time.time())}"
+
+    db = get_db()
+    cur = db.execute(
+        """INSERT INTO leads (nmlsid, name, company, city, email,
+           facebook, linkedin, instagram, twitter_x, youtube, tiktok)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (nmlsid, name, company, city, email,
+         facebook, linkedin, instagram, twitter_x, youtube, tiktok),
+    )
+    lead_id = cur.lastrowid
+
+    # Link to "All TX Non-QM Brokers" list (id=1) if it exists
+    existing_list = db.execute("SELECT id FROM lists WHERE id = 1").fetchone()
+    if existing_list:
+        db.execute(
+            "INSERT OR IGNORE INTO list_leads (list_id, lead_id) VALUES (?, ?)",
+            (1, lead_id),
+        )
+
+    db.commit()
+    flash(f"Lead '{name}' added successfully.", "success")
+    return redirect(url_for("leads.index"))

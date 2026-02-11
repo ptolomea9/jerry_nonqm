@@ -37,9 +37,19 @@
         <!-- Flyer preview -->
         {% if flyer %}
         <div class="mt-4 p-3 bg-gray-50 rounded-md">
-            <p class="text-xs text-gray-500 mb-2">Flyer: {{ flyer.name }}</p>
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500">Flyer: {{ flyer.name }}</p>
+                {% if flyer.file_type in ('png', 'jpg', 'jpeg', 'gif') %}
+                <button id="btn-copy-flyer" onclick="copyFlyer()"
+                        class="flex items-center gap-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-400">
+                    <span id="copy-flyer-label">Copy Flyer</span>
+                    <kbd class="rounded bg-amber-400 px-1 py-0.5 text-xs">C</kbd>
+                </button>
+                {% endif %}
+            </div>
             {% if flyer.file_type in ('png', 'jpg', 'jpeg', 'gif') %}
-            <img src="{{ url_for('flyers.preview', flyer_id=flyer.id) }}"
+            <img id="flyer-img" src="{{ url_for('flyers.preview', flyer_id=flyer.id) }}"
+                 crossorigin="anonymous"
                  class="max-h-48 object-contain rounded" alt="{{ flyer.name }}">
             {% else %}
             <a href="{{ url_for('flyers.preview', flyer_id=flyer.id) }}" target="_blank"
@@ -56,7 +66,12 @@
             <span>Open Profile</span>
             <kbd class="rounded bg-indigo-500 px-1.5 py-0.5 text-xs">O</kbd>
         </a>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
+            <button id="btn-back" onclick="goBack()" {% if current <= 1 %}disabled{% endif %}
+                    class="flex items-center justify-center gap-2 rounded-md bg-amber-500 px-6 py-3 text-sm font-medium text-white hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed">
+                <span>Back</span>
+                <kbd class="rounded bg-amber-400 px-1.5 py-0.5 text-xs">B</kbd>
+            </button>
             <button id="btn-sent" onclick="logAction('sent')"
                     class="flex items-center justify-center gap-2 rounded-md bg-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-green-500">
                 <span>Sent</span>
@@ -73,6 +88,8 @@
     <!-- Keyboard shortcuts hint -->
     <p class="mt-4 text-center text-xs text-gray-400">
         Keyboard: <kbd class="rounded border px-1">O</kbd> Open &middot;
+        <kbd class="rounded border px-1">C</kbd> Copy Flyer &middot;
+        <kbd class="rounded border px-1">B</kbd> Back &middot;
         <kbd class="rounded border px-1">S</kbd> Sent &middot;
         <kbd class="rounded border px-1">X</kbd> Skip
     </p>
