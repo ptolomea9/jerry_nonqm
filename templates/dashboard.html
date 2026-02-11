@@ -66,11 +66,25 @@
         {% if lists %}
         <ul class="divide-y divide-gray-100">
             {% for lst in lists[:5] %}
-            <li class="py-2 flex justify-between">
+            <li class="py-2 flex items-center justify-between">
                 <a href="{{ url_for('lists.detail', list_id=lst.id) }}" class="text-indigo-600 hover:underline">
                     {{ lst.name }}
                 </a>
-                <span class="text-sm text-gray-500">{{ lst.row_count }} leads</span>
+                <div class="flex items-center gap-2">
+                    {% if lst.enrichment_status == 'complete' %}
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Enriched</span>
+                    {% elif lst.enrichment_status == 'none' %}
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Not Enriched</span>
+                    {% elif lst.enrichment_status == 'error' %}
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">Error</span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
+                        <svg class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                        Enriching
+                    </span>
+                    {% endif %}
+                    <span class="text-sm text-gray-500">{{ lst.row_count }} leads</span>
+                </div>
             </li>
             {% endfor %}
         </ul>

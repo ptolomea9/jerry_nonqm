@@ -134,6 +134,11 @@ def enrich(list_id):
         flash("List not found", "error")
         return redirect(url_for("lists.index"))
 
+    # Allow enrichment for 'none', 'error', and 'complete' (re-enrich)
+    if lst["enrichment_status"] not in ("none", "error", "complete"):
+        flash("Enrichment is already in progress", "info")
+        return redirect(url_for("lists.detail", list_id=list_id))
+
     db = get_db()
     db.execute("UPDATE lists SET enrichment_status = 'enriching_urls' WHERE id = ?", (list_id,))
     db.commit()
