@@ -2,107 +2,153 @@
 {% block title %}Outreach Setup - Jerry Non-QM{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Outreach Setup</h1>
-    <p class="text-sm text-gray-500">Select a list, flyer, and platform to start your outreach session.</p>
+<!-- Hero header -->
+<div class="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 px-8 py-8">
+    <div class="absolute inset-0 opacity-10">
+        <div class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-3xl"></div>
+        <div class="absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-indigo-300/30 blur-2xl"></div>
+    </div>
+    <div class="relative">
+        <h1 class="text-3xl font-extrabold tracking-tight text-white">Outreach Setup</h1>
+        <p class="mt-1 text-indigo-200 text-sm">Select a list, flyer, and platform to start your outreach session</p>
+    </div>
 </div>
 
-<form method="post" action="{{ url_for('outreach.start') }}" class="max-w-2xl">
-    <!-- List selection -->
-    <div class="mb-6 rounded-lg bg-white p-5 shadow">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">1. Select List</h2>
+<form method="post" action="{{ url_for('outreach.start') }}" class="max-w-3xl">
+    <!-- Step 1: List selection -->
+    <div class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">1</div>
+            <h2 class="text-base font-bold text-gray-900">Select List</h2>
+        </div>
         {% if lists %}
         <div class="space-y-2">
             {% for lst in lists %}
-            <label class="flex items-center gap-3 rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
-                <input type="radio" name="list_id" value="{{ lst.id }}" class="text-indigo-600"
+            <label class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-50/50 has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50/50 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200 transition-all duration-150">
+                <input type="radio" name="list_id" value="{{ lst.id }}" class="text-indigo-600 focus:ring-indigo-500"
                        {% if loop.first %}checked{% endif %}>
-                <div>
-                    <p class="font-medium text-gray-900">{{ lst.name }}</p>
-                    <p class="text-xs text-gray-500">{{ lst.row_count }} leads &middot; {{ lst.enrichment_status }}</p>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-sm text-gray-900">{{ lst.name }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ lst.row_count }} leads &middot; {{ lst.enrichment_status }}</p>
                 </div>
+                {% if lst.enrichment_status == 'complete' %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Enriched
+                </span>
+                {% endif %}
             </label>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-sm text-gray-500">No lists available. <a href="{{ url_for('lists.index') }}" class="text-indigo-600 hover:underline">Upload a CSV first</a>.</p>
+        <div class="rounded-lg bg-gray-50 p-4 text-center">
+            <p class="text-sm text-gray-500">No lists available. <a href="{{ url_for('lists.index') }}" class="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors">Upload a CSV first</a>.</p>
+        </div>
         {% endif %}
     </div>
 
-    <!-- Flyer selection -->
-    <div class="mb-6 rounded-lg bg-white p-5 shadow">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">2. Select Flyer (optional)</h2>
+    <!-- Step 2: Flyer selection -->
+    <div class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">2</div>
+            <h2 class="text-base font-bold text-gray-900">Select Flyer <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
+        </div>
         {% if flyers %}
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <label class="flex flex-col items-center rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
-                <input type="radio" name="flyer_id" value="" checked class="mb-2 text-indigo-600">
-                <p class="text-xs text-gray-500">No Flyer</p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <label class="flex flex-col items-center rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-50/50 has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50/50 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200 transition-all duration-150">
+                <input type="radio" name="flyer_id" value="" checked class="mb-3 text-indigo-600 focus:ring-indigo-500">
+                <div class="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center mb-2">
+                    <svg class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </div>
+                <p class="text-xs font-medium text-gray-500">No Flyer</p>
             </label>
             {% for flyer in flyers %}
-            <label class="flex flex-col items-center rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
-                <input type="radio" name="flyer_id" value="{{ flyer.id }}" class="mb-2 text-indigo-600">
+            <label class="flex flex-col items-center rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-50/50 has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50/50 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200 transition-all duration-150">
+                <input type="radio" name="flyer_id" value="{{ flyer.id }}" class="mb-3 text-indigo-600 focus:ring-indigo-500">
                 {% if flyer.file_type in ('png', 'jpg', 'jpeg', 'gif') %}
                 <img src="{{ url_for('flyers.preview', flyer_id=flyer.id) }}"
-                     class="w-20 h-20 object-contain mb-1" alt="{{ flyer.name }}">
+                     class="h-16 w-16 object-contain rounded-lg mb-2" alt="{{ flyer.name }}">
                 {% else %}
-                <div class="w-20 h-20 bg-gray-100 flex items-center justify-center mb-1 text-gray-400 text-xs">PDF</div>
+                <div class="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center mb-2">
+                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
                 {% endif %}
-                <p class="text-xs text-gray-700 text-center truncate w-full">{{ flyer.name }}</p>
+                <p class="text-xs font-medium text-gray-700 text-center truncate w-full">{{ flyer.name }}</p>
             </label>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-sm text-gray-500">No flyers uploaded. <a href="{{ url_for('flyers.index') }}" class="text-indigo-600 hover:underline">Upload one first</a>.</p>
+        <div class="rounded-lg bg-gray-50 p-4 text-center">
+            <p class="text-sm text-gray-500">No flyers uploaded. <a href="{{ url_for('flyers.index') }}" class="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors">Upload one first</a>.</p>
+        </div>
         {% endif %}
     </div>
 
-    <!-- Platform selection -->
-    <div class="mb-6 rounded-lg bg-white p-5 shadow">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">3. Select Platform</h2>
+    <!-- Step 3: Platform selection -->
+    <div class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">3</div>
+            <h2 class="text-base font-bold text-gray-900">Select Platform</h2>
+        </div>
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {% set platforms = [('facebook', 'Facebook', 'bg-blue-50 border-blue-200 text-blue-700'), ('linkedin', 'LinkedIn', 'bg-sky-50 border-sky-200 text-sky-700'), ('instagram', 'Instagram', 'bg-pink-50 border-pink-200 text-pink-700'), ('twitter_x', 'Twitter/X', 'bg-gray-50 border-gray-200 text-gray-700'), ('youtube', 'YouTube', 'bg-red-50 border-red-200 text-red-700'), ('tiktok', 'TikTok', 'bg-purple-50 border-purple-200 text-purple-700'), ('email', 'Email', 'bg-green-50 border-green-200 text-green-700')] %}
-            {% for value, label, classes in platforms %}
-            <label class="flex items-center gap-2 rounded-md border p-3 cursor-pointer {{ classes }} hover:opacity-80">
-                <input type="radio" name="platform" value="{{ value }}" class="text-indigo-600"
+            {% set platforms = [
+                ('facebook', 'Facebook', 'FB', 'bg-blue-50 text-blue-700 ring-blue-200 has-[:checked]:bg-blue-100 has-[:checked]:ring-blue-300'),
+                ('linkedin', 'LinkedIn', 'IN', 'bg-sky-50 text-sky-700 ring-sky-200 has-[:checked]:bg-sky-100 has-[:checked]:ring-sky-300'),
+                ('instagram', 'Instagram', 'IG', 'bg-pink-50 text-pink-700 ring-pink-200 has-[:checked]:bg-pink-100 has-[:checked]:ring-pink-300'),
+                ('twitter_x', 'Twitter/X', 'X', 'bg-gray-50 text-gray-700 ring-gray-200 has-[:checked]:bg-gray-100 has-[:checked]:ring-gray-300'),
+                ('youtube', 'YouTube', 'YT', 'bg-red-50 text-red-700 ring-red-200 has-[:checked]:bg-red-100 has-[:checked]:ring-red-300'),
+                ('tiktok', 'TikTok', 'TT', 'bg-violet-50 text-violet-700 ring-violet-200 has-[:checked]:bg-violet-100 has-[:checked]:ring-violet-300'),
+                ('email', 'Email', '@', 'bg-emerald-50 text-emerald-700 ring-emerald-200 has-[:checked]:bg-emerald-100 has-[:checked]:ring-emerald-300')
+            ] %}
+            {% for value, label, abbr, classes in platforms %}
+            <label class="flex items-center gap-2 rounded-lg ring-1 p-3 cursor-pointer {{ classes }} transition-all duration-150">
+                <input type="radio" name="platform" value="{{ value }}" class="text-indigo-600 focus:ring-indigo-500"
                        {% if value == 'facebook' %}checked{% endif %}>
-                <span class="text-sm font-medium">{{ label }}</span>
+                <span class="text-sm font-semibold">{{ label }}</span>
             </label>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Template selection -->
-    <div class="mb-6 rounded-lg bg-white p-5 shadow">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">4. Select Message Template (optional)</h2>
+    <!-- Step 4: Template selection -->
+    <div class="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">4</div>
+            <h2 class="text-base font-bold text-gray-900">Select Message Template <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
+        </div>
         {% if msg_templates %}
         <div class="space-y-2" id="template-list">
-            <label class="flex items-center gap-3 rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50 template-option" data-platform="all">
-                <input type="radio" name="template_id" value="" checked class="text-indigo-600">
+            <label class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-50/50 has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50/50 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200 transition-all duration-150 template-option" data-platform="all">
+                <input type="radio" name="template_id" value="" checked class="text-indigo-600 focus:ring-indigo-500">
                 <div>
-                    <p class="font-medium text-gray-900">No Template</p>
-                    <p class="text-xs text-gray-500">Skip message — just open profile and send manually</p>
+                    <p class="font-semibold text-sm text-gray-900">No Template</p>
+                    <p class="text-xs text-gray-400">Skip message — just open profile and send manually</p>
                 </div>
             </label>
             {% for t in msg_templates %}
-            <label class="flex items-center gap-3 rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50 template-option" data-platform="{{ t.platform }}">
-                <input type="radio" name="template_id" value="{{ t.id }}" class="text-indigo-600">
-                <div>
-                    <p class="font-medium text-gray-900">{{ t.name }}</p>
-                    <p class="text-xs text-gray-500">{{ t.platform|title }} &middot; {{ t.content[:60] }}{% if t.content|length > 60 %}...{% endif %}</p>
+            <label class="flex items-center gap-3 rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-50/50 has-[:checked]:border-indigo-300 has-[:checked]:bg-indigo-50/50 has-[:checked]:ring-1 has-[:checked]:ring-indigo-200 transition-all duration-150 template-option" data-platform="{{ t.platform }}">
+                <input type="radio" name="template_id" value="{{ t.id }}" class="text-indigo-600 focus:ring-indigo-500">
+                <div class="min-w-0">
+                    <p class="font-semibold text-sm text-gray-900">{{ t.name }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ t.platform|title }} &middot; {{ t.content[:60] }}{% if t.content|length > 60 %}...{% endif %}</p>
                 </div>
             </label>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-sm text-gray-500">No templates created. <a href="{{ url_for('templates.index') }}" class="text-indigo-600 hover:underline">Create one first</a>.</p>
+        <div class="rounded-lg bg-gray-50 p-4 text-center">
+            <p class="text-sm text-gray-500">No templates created. <a href="{{ url_for('templates.index') }}" class="text-indigo-600 hover:text-indigo-500 font-semibold transition-colors">Create one first</a>.</p>
+        </div>
         {% endif %}
     </div>
 
-    <button type="submit" class="w-full rounded-md bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500">
+    <button type="submit" class="w-full rounded-xl bg-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-500 transition-all duration-200">
         Start Outreach Session
     </button>
 </form>
+{% endblock %}
 
+{% block scripts %}
 <script>
 // Filter templates when platform selection changes
 document.querySelectorAll('input[name="platform"]').forEach(function(radio) {
@@ -114,7 +160,6 @@ document.querySelectorAll('input[name="platform"]').forEach(function(radio) {
                 opt.style.display = '';
             } else {
                 opt.style.display = 'none';
-                // Uncheck hidden templates
                 var inp = opt.querySelector('input[type="radio"]');
                 if (inp && inp.checked) {
                     document.querySelector('input[name="template_id"][value=""]').checked = true;

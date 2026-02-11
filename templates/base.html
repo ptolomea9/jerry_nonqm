@@ -10,38 +10,29 @@
 <body class="h-full">
 <div class="min-h-full">
     <!-- Navigation -->
-    <nav class="bg-indigo-700">
+    <nav class="bg-gradient-to-r from-indigo-700 via-indigo-700 to-slate-800">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex h-16 items-center justify-between">
+            <div class="flex h-14 items-center justify-between">
                 <div class="flex items-center">
-                    <a href="{{ url_for('dashboard.index') }}" class="text-white font-bold text-lg">
+                    <a href="{{ url_for('dashboard.index') }}" class="text-white font-extrabold text-lg tracking-tight">
                         Jerry Non-QM
                     </a>
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="{{ url_for('dashboard.index') }}"
-                           class="{% if request.path in ['/', '/dashboard'] %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-                            Dashboard
+                    <div class="ml-10 flex items-baseline space-x-1">
+                        {% set nav_items = [
+                            ('dashboard.index', 'Dashboard', ['/', '/dashboard']),
+                            ('leads.index', 'Leads', ['/leads']),
+                            ('lists.index', 'Lists', ['/lists']),
+                            ('flyers.index', 'Flyers', ['/flyers']),
+                            ('templates.index', 'Templates', ['/templates']),
+                            ('outreach.setup', 'Outreach', ['/outreach'])
+                        ] %}
+                        {% for endpoint, label, paths in nav_items %}
+                        {% set is_active = request.path in paths or (paths[0] != '/' and request.path.startswith(paths[0])) %}
+                        <a href="{{ url_for(endpoint) }}"
+                           class="{% if is_active %}bg-white/15 text-white{% else %}text-indigo-200 hover:bg-white/10 hover:text-white{% endif %} rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150">
+                            {{ label }}
                         </a>
-                        <a href="{{ url_for('leads.index') }}"
-                           class="{% if request.path.startswith('/leads') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-                            Leads
-                        </a>
-                        <a href="{{ url_for('lists.index') }}"
-                           class="{% if request.path.startswith('/lists') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-                            Lists
-                        </a>
-                        <a href="{{ url_for('flyers.index') }}"
-                           class="{% if request.path.startswith('/flyers') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-                            Flyers
-                        </a>
-                        <a href="{{ url_for('templates.index') }}"
-                           class="{% if request.path.startswith('/templates') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-                            Templates
-                        </a>
-                        <a href="{{ url_for('outreach.setup') }}"
-                           class="{% if request.path.startswith('/outreach') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-                            Outreach
-                        </a>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -53,11 +44,11 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
-        <div class="rounded-md p-4 mb-3
-            {% if category == 'error' %}bg-red-50 text-red-800
-            {% elif category == 'warning' %}bg-yellow-50 text-yellow-800
-            {% elif category == 'info' %}bg-blue-50 text-blue-800
-            {% else %}bg-green-50 text-green-800{% endif %}">
+        <div class="rounded-xl p-4 mb-3 ring-1
+            {% if category == 'error' %}bg-red-50 text-red-800 ring-red-200
+            {% elif category == 'warning' %}bg-amber-50 text-amber-800 ring-amber-200
+            {% elif category == 'info' %}bg-blue-50 text-blue-800 ring-blue-200
+            {% else %}bg-emerald-50 text-emerald-800 ring-emerald-200{% endif %}">
             <p class="text-sm font-medium">{{ message }}</p>
         </div>
         {% endfor %}
