@@ -113,10 +113,8 @@ def import_csv(csv_path=INPUT_CSV):
 
     conn.commit()
 
-    # Seed default message templates if none exist
-    tpl_count = conn.execute("SELECT COUNT(*) FROM message_templates").fetchone()[0]
-    if tpl_count == 0:
-        seed_templates(conn)
+    # Seed default message templates (inserts only missing ones)
+    seed_templates(conn)
 
     conn.close()
 
@@ -179,15 +177,56 @@ def seed_templates(conn):
          'Hey {name}! I have been working with some of the top Non-QM shops in Texas and love connecting with people who are really in the trenches. {company} is clearly doing well in {city} — would love to swap ideas and see if there is a way we can help each other win more deals.'),
         ('The Rate Teaser', 'facebook',
          'Hey {name}! Just curious — when is the last time you shopped your Non-QM rates? I work with a lender that has been beating the competition consistently and a lot of brokers in {city} have been making the switch. Happy to send {company} a rate sheet if you are open to it.'),
+        # TikTok
+        ('The Quick Hook', 'tiktok',
+         'Hey {name}! Saw {company} is doing serious Non-QM volume in {city} — love it. I work with a wholesale lender that is helping TX brokers close faster with better pricing. Would love to connect and see if there is a fit.'),
+        ('The Casual DM', 'tiktok',
+         'Hey {name}! Fellow mortgage person here. {company} caught my attention — ranked #{rank} for Non-QM in TX is impressive. I help brokers like you get better execution on Non-QM deals. Mind if I send over some details?'),
+        ('The Trend Angle', 'tiktok',
+         'Hey {name}, Non-QM is blowing up right now and {company} is clearly ahead of the curve in {city}. I work with a lender that is built for shops doing your kind of volume — same-day locks, minimal overlays. Worth a quick chat?'),
+        ('The Short Pitch', 'tiktok',
+         'Hey {name}! Quick intro — I am an AE with a Non-QM lender. We have been helping brokers in {city} close more deals with faster turns. Seeing what {company} is doing at #{rank} in TX, figured I should reach out. Open to connecting?'),
+        ('The Social Proof', 'tiktok',
+         'Hey {name}! A bunch of top Non-QM shops in TX have been switching to us lately. With {company} doing {volume} in {city}, you should at least see what we offer. Happy to send a rate sheet if you are interested.'),
+        ('The Curiosity Hook', 'tiktok',
+         'Hey {name}, there is one thing the top Non-QM brokers in TX are doing differently right now to win more deals. {company} is already crushing it at #{rank} — mind if I share what I am seeing?'),
+        ('The Value Prop', 'tiktok',
+         'Hey {name}! I have been connecting with Non-QM producers across TX and {company} keeps standing out. I work with a lender that specializes in making Non-QM easy — better pricing, faster turns, less hassle. Worth exploring?'),
+        ('The Direct Approach', 'tiktok',
+         'Hey {name}, not going to waste your time — I am an AE with a Non-QM wholesale lender. We are helping brokers in {city} get better rates and close in under 21 days. {company} doing {volume} tells me you could benefit. Want to take a look?'),
+        # Email
+        ('The Professional Introduction', 'email',
+         'Subject: Non-QM Partnership Opportunity for {company}\n\nHi {name},\n\nI came across {company} while researching the top Non-QM originators in Texas, and your production at #{rank} is impressive. I am an Account Executive with a wholesale lender that specializes in Non-QM, and I wanted to introduce myself.\n\nWe have been helping brokers in {city} and across TX close more deals with:\n- Same-day rate locks\n- Minimal overlays\n- Dedicated AE support\n- Competitive pricing on DSCR, Bank Statement, and Asset Depletion programs\n\nWould you be open to a quick 10-minute call this week to see if there is a fit?\n\nBest regards'),
+        ('The Value-First Email', 'email',
+         'Subject: Helping {city} Brokers Win More Non-QM Deals\n\nHi {name},\n\nI have been working with several Non-QM brokers in the {city} market, and a common theme keeps coming up — turn times and overlays are killing deals.\n\nI work with a wholesale lender that has solved both of those problems. Our average Non-QM close time is under 21 days, and we have fewer overlays than most of the competition.\n\nGiven that {company} is already doing {volume} in Non-QM volume, I think we could help you close even more. Would you be open to seeing a rate sheet?\n\nBest regards'),
+        ('The Data-Driven Email', 'email',
+         'Subject: {company} Ranked #{rank} in TX Non-QM — Let us Help You Grow\n\nHi {name},\n\nI regularly analyze Non-QM production data across Texas, and {company} at #{rank} caught my attention. That level of volume in {city} tells me you know this space well.\n\nI am reaching out because the brokers I work with at similar volume levels have been able to increase their Non-QM closings by 15-20% after partnering with us — primarily through better pricing and faster execution.\n\nWould it be worth a 10-minute conversation to see if we can add value to what you are already doing?\n\nBest regards'),
+        ('The Problem-Solution Email', 'email',
+         'Subject: Quick Question About Your Non-QM Pipeline\n\nHi {name},\n\nQuick question — what is the biggest challenge you face right now when closing Non-QM deals at {company}?\n\nI ask because I work with a wholesale lender and the brokers I partner with in {city} used to struggle with the same things — slow turn times, surprise overlays, and inconsistent underwriting. We have built our entire process around eliminating those pain points.\n\nIf any of that resonates, I would love to share how we are helping shops like {company} close more deals with less friction.\n\nBest regards'),
+        ('The Warm Outreach Email', 'email',
+         'Subject: Connecting with Top Non-QM Producers in {city}\n\nHi {name},\n\nI have been reaching out to the top Non-QM producers in Texas to build relationships with the best in the business. {company} doing {volume} in {city} definitely qualifies.\n\nI am an AE with a Non-QM wholesale lender, and I am not here to hard sell — I genuinely believe that when great brokers partner with great lenders, everyone wins.\n\nWould you be open to a quick intro call? Even if the timing is not right now, I would love to have {company} in my network.\n\nBest regards'),
+        ('The Rate Comparison Email', 'email',
+         'Subject: Non-QM Rate Check for {company}\n\nHi {name},\n\nWhen was the last time you compared your Non-QM rates? I have been hearing from brokers in {city} that pricing has gotten increasingly competitive, and many are finding 25-50 bps in savings by shopping around.\n\nI work with a wholesale lender that has consistently been at the top of rate comparisons for DSCR, Bank Statement, and Asset Depletion programs. Given {company} is doing {volume} in volume, even a small pricing improvement could have a significant impact on your bottom line.\n\nHappy to send over a rate sheet — no strings attached. Would that be helpful?\n\nBest regards'),
+        ('The Referral-Style Email', 'email',
+         'Subject: Your Name Keeps Coming Up\n\nHi {name},\n\nI have been connecting with several mortgage professionals in the {city} market, and your name at {company} keeps coming up as one of the top Non-QM producers in the area.\n\nI am an AE with a Non-QM wholesale lender, and I make it a point to know the best brokers in every market. I would love to introduce myself and learn more about what is working well for {company} — and share some of what I am seeing from the lender side.\n\nDo you have 10 minutes this week for a quick call?\n\nBest regards'),
+        ('The Follow-Up Friendly Email', 'email',
+         'Subject: Non-QM Resources for {company}\n\nHi {name},\n\nI know your inbox is probably full, so I will keep this short. I am an AE with a Non-QM wholesale lender and I wanted to share a few resources that brokers in {city} have found valuable:\n\n- Our latest Non-QM rate sheet\n- A quick-reference guide for DSCR and Bank Statement qualification\n- Our scenario desk for tricky deals\n\nWith {company} ranked #{rank} in TX, I figured these might be useful. Happy to send any or all of them over — just let me know.\n\nBest regards'),
     ]
 
+    count = 0
     for name, platform, content in templates:
-        conn.execute(
-            "INSERT INTO message_templates (name, platform, content) VALUES (?, ?, ?)",
-            (name, platform, content),
-        )
+        existing = conn.execute(
+            "SELECT id FROM message_templates WHERE name = ? AND platform = ?",
+            (name, platform),
+        ).fetchone()
+        if not existing:
+            conn.execute(
+                "INSERT INTO message_templates (name, platform, content) VALUES (?, ?, ?)",
+                (name, platform, content),
+            )
+            count += 1
     conn.commit()
-    print(f"Seeded {len(templates)} message templates")
+    print(f"Seeded {count} new message templates ({len(templates)} total defined)")
 
 
 if __name__ == "__main__":

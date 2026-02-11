@@ -46,7 +46,7 @@
 
 <!-- Existing templates -->
 {% if templates %}
-<div class="rounded-lg bg-white shadow overflow-hidden max-w-2xl">
+<div class="rounded-lg bg-white shadow overflow-hidden">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
@@ -61,7 +61,13 @@
             <tr>
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ t.name }}</td>
                 <td class="px-4 py-3 text-sm text-gray-500">{{ t.platform }}</td>
-                <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{{ t.content[:80] }}{% if t.content|length > 80 %}...{% endif %}</td>
+                <td class="px-4 py-3 text-sm text-gray-500 max-w-md">
+                    <button type="button" onclick="openModal('{{ t.name | e }}', '{{ t.platform | e }}', this)"
+                            class="text-left text-gray-600 hover:text-indigo-600 cursor-pointer truncate block w-full">
+                        {{ t.content[:80] }}{% if t.content|length > 80 %}...{% endif %}
+                    </button>
+                    <div class="hidden">{{ t.content }}</div>
+                </td>
                 <td class="px-4 py-3 text-right">
                     <form method="post" action="{{ url_for('templates.delete', template_id=t.id) }}" class="inline"
                           onsubmit="return confirm('Delete this template?')">
@@ -73,7 +79,58 @@
         </tbody>
     </table>
 </div>
+
+<!-- Modal -->
+<div id="template-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="fixed inset-0 bg-black/50" onclick="closeModal()"></div>
+    <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+            <div>
+                <h3 id="modal-name" class="text-lg font-semibold text-gray-900"></h3>
+                <span id="modal-platform" class="text-xs text-gray-500"></span>
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <div class="px-5 py-4 overflow-y-auto">
+            <p id="modal-content" class="text-sm text-gray-700 whitespace-pre-wrap"></p>
+        </div>
+        <div class="px-5 py-3 border-t bg-gray-50 rounded-b-lg flex justify-end">
+            <button onclick="copyModalContent()" class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+                Copy
+            </button>
+        </div>
+    </div>
+</div>
 {% else %}
 <p class="text-sm text-gray-500">No templates yet. Create one above to use during outreach sessions.</p>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(name, platform, btn) {
+    var fullContent = btn.nextElementSibling.textContent.trim();
+    document.getElementById('modal-name').textContent = name;
+    document.getElementById('modal-platform').textContent = platform;
+    document.getElementById('modal-content').textContent = fullContent;
+    document.getElementById('template-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('template-modal').classList.add('hidden');
+}
+
+function copyModalContent() {
+    var text = document.getElementById('modal-content').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        var btn = document.querySelector('#template-modal button:last-child');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+</script>
 {% endblock %}
