@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Outreach Setup - Jerry Non-QM{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Outreach Setup</h1>
+    <p class="text-sm text-gray-500">Select a list, flyer, and platform to start your outreach session.</p>
+</div>
+
+<form method="post" action="{{ url_for('outreach.start') }}" class="max-w-2xl">
+    <!-- List selection -->
+    <div class="mb-6 rounded-lg bg-white p-5 shadow">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">1. Select List</h2>
+        {% if lists %}
+        <div class="space-y-2">
+            {% for lst in lists %}
+            <label class="flex items-center gap-3 rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="list_id" value="{{ lst.id }}" class="text-indigo-600"
+                       {% if loop.first %}checked{% endif %}>
+                <div>
+                    <p class="font-medium text-gray-900">{{ lst.name }}</p>
+                    <p class="text-xs text-gray-500">{{ lst.row_count }} leads &middot; {{ lst.enrichment_status }}</p>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No lists available. <a href="{{ url_for('lists.index') }}" class="text-indigo-600 hover:underline">Upload a CSV first</a>.</p>
+        {% endif %}
+    </div>
+
+    <!-- Flyer selection -->
+    <div class="mb-6 rounded-lg bg-white p-5 shadow">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">2. Select Flyer (optional)</h2>
+        {% if flyers %}
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <label class="flex flex-col items-center rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="flyer_id" value="" checked class="mb-2 text-indigo-600">
+                <p class="text-xs text-gray-500">No Flyer</p>
+            </label>
+            {% for flyer in flyers %}
+            <label class="flex flex-col items-center rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="flyer_id" value="{{ flyer.id }}" class="mb-2 text-indigo-600">
+                {% if flyer.file_type in ('png', 'jpg', 'jpeg', 'gif') %}
+                <img src="{{ url_for('flyers.preview', flyer_id=flyer.id) }}"
+                     class="w-20 h-20 object-contain mb-1" alt="{{ flyer.name }}">
+                {% else %}
+                <div class="w-20 h-20 bg-gray-100 flex items-center justify-center mb-1 text-gray-400 text-xs">PDF</div>
+                {% endif %}
+                <p class="text-xs text-gray-700 text-center truncate w-full">{{ flyer.name }}</p>
+            </label>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No flyers uploaded. <a href="{{ url_for('flyers.index') }}" class="text-indigo-600 hover:underline">Upload one first</a>.</p>
+        {% endif %}
+    </div>
+
+    <!-- Platform selection -->
+    <div class="mb-6 rounded-lg bg-white p-5 shadow">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">3. Select Platform</h2>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {% set platforms = [('facebook', 'Facebook', 'bg-blue-50 border-blue-200 text-blue-700'), ('linkedin', 'LinkedIn', 'bg-sky-50 border-sky-200 text-sky-700'), ('instagram', 'Instagram', 'bg-pink-50 border-pink-200 text-pink-700'), ('twitter_x', 'Twitter/X', 'bg-gray-50 border-gray-200 text-gray-700'), ('youtube', 'YouTube', 'bg-red-50 border-red-200 text-red-700'), ('tiktok', 'TikTok', 'bg-purple-50 border-purple-200 text-purple-700'), ('email', 'Email', 'bg-green-50 border-green-200 text-green-700')] %}
+            {% for value, label, classes in platforms %}
+            <label class="flex items-center gap-2 rounded-md border p-3 cursor-pointer {{ classes }} hover:opacity-80">
+                <input type="radio" name="platform" value="{{ value }}" class="text-indigo-600"
+                       {% if value == 'facebook' %}checked{% endif %}>
+                <span class="text-sm font-medium">{{ label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <button type="submit" class="w-full rounded-md bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500">
+        Start Outreach Session
+    </button>
+</form>
+{% endblock %}

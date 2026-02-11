@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ lst.name }} - Jerry Non-QM{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ lst.name }}</h1>
+        <p class="text-sm text-gray-500">{{ lst.row_count }} leads &middot; {{ lst.enrichment_status }}</p>
+    </div>
+    <div class="flex gap-2">
+        {% if lst.enrichment_status == 'none' %}
+        <form method="post" action="{{ url_for('lists.enrich', list_id=lst.id) }}">
+            <button type="submit" class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500">
+                Enrich Data
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('lists.index') }}" class="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300">
+            Back to Lists
+        </a>
+    </div>
+</div>
+
+<!-- Enrichment status bar -->
+{% if lst.enrichment_status not in ('none', 'complete') %}
+<div id="enrichment-bar" class="mb-6 rounded-lg bg-yellow-50 p-4 border border-yellow-200">
+    <div class="flex items-center justify-between mb-2">
+        <p class="text-sm font-medium text-yellow-800">Enrichment in progress: <span id="enrich-status">{{ lst.enrichment_status }}</span></p>
+        <span id="enrich-pct" class="text-sm font-bold text-yellow-800">0%</span>
+    </div>
+    <div class="w-full bg-yellow-200 rounded-full h-2">
+        <div id="enrich-progress" class="bg-yellow-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Leads preview -->
+<div class="overflow-x-auto rounded-lg bg-white shadow">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">City</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Volume</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Website</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for lead in leads[:50] %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-3 py-2 text-sm text-gray-500">{{ lead.rank }}</td>
+                <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ lead.name }}</td>
+                <td class="px-3 py-2 text-sm text-gray-600">{{ lead.company }}</td>
+                <td class="px-3 py-2 text-sm text-gray-500">{{ lead.city }}</td>
+                <td class="px-3 py-2 text-sm text-gray-600">{{ lead.volume }}</td>
+                <td class="px-3 py-2 text-sm">
+                    {% if lead.company_website %}
+                    <a href="{{ lead.company_website }}" target="_blank" class="text-indigo-600 hover:underline truncate block max-w-[200px]">
+                        {{ lead.company_website|replace('https://', '')|replace('http://', '') }}
+                    </a>
+                    {% else %}
+                    <span class="text-gray-400">--</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if leads|length > 50 %}
+    <div class="p-3 text-center text-sm text-gray-500 bg-gray-50">
+        Showing first 50 of {{ leads|length }} leads
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if lst.enrichment_status not in ('none', 'complete') %}
+<script>
+(function() {
+    function poll() {
+        fetch('/api/lists/{{ lst.id }}/status')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('enrich-status').textContent = data.status;
+                document.getElementById('enrich-pct').textContent = data.progress_pct + '%';
+                document.getElementById('enrich-progress').style.width = data.progress_pct + '%';
+                if (data.status === 'complete') {
+                    location.reload();
+                } else {
+                    setTimeout(poll, 5000);
+                }
+            })
+            .catch(() => setTimeout(poll, 5000));
+    }
+    poll();
+})();
+</script>
+{% endif %}
+{% endblock %}

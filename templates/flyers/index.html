@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Flyer Gallery - Jerry Non-QM{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Flyer Gallery</h1>
+</div>
+
+<!-- Upload form -->
+<div class="mb-6 rounded-lg bg-white p-5 shadow">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Upload Flyer</h2>
+    <form method="post" action="{{ url_for('flyers.upload') }}" enctype="multipart/form-data">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Flyer Name</label>
+                <input type="text" name="flyer_name" placeholder="e.g. January DSCR Special"
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Image File</label>
+                <input type="file" name="flyer_file" accept=".png,.jpg,.jpeg,.gif,.pdf"
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-indigo-700">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                    Upload
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Flyer grid -->
+{% if flyers %}
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    {% for flyer in flyers %}
+    <div class="rounded-lg bg-white shadow overflow-hidden">
+        {% if flyer.file_type in ('png', 'jpg', 'jpeg', 'gif') %}
+        <div class="aspect-[3/4] bg-gray-100">
+            <img src="{{ url_for('flyers.preview', flyer_id=flyer.id) }}"
+                 alt="{{ flyer.name }}"
+                 class="w-full h-full object-contain">
+        </div>
+        {% else %}
+        <div class="aspect-[3/4] bg-gray-100 flex items-center justify-center">
+            <div class="text-center">
+                <p class="text-4xl text-gray-300">PDF</p>
+                <p class="text-sm text-gray-400 mt-2">{{ flyer.name }}</p>
+            </div>
+        </div>
+        {% endif %}
+        <div class="p-3">
+            <h3 class="font-medium text-gray-900 text-sm truncate">{{ flyer.name }}</h3>
+            <p class="text-xs text-gray-500 mt-1">{{ flyer.created_at }}</p>
+            <div class="mt-2 flex gap-2">
+                <a href="{{ url_for('flyers.preview', flyer_id=flyer.id) }}" target="_blank"
+                   class="text-xs text-indigo-600 hover:underline">View Full</a>
+                <form method="post" action="{{ url_for('flyers.delete', flyer_id=flyer.id) }}"
+                      onsubmit="return confirm('Delete this flyer?')">
+                    <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="rounded-lg bg-white p-8 shadow text-center">
+    <p class="text-gray-500">No flyers uploaded yet. Upload one above to get started.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jerry Non-QM Outreach{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="h-full">
+<div class="min-h-full">
+    <!-- Navigation -->
+    <nav class="bg-indigo-700">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center">
+                    <a href="{{ url_for('dashboard.index') }}" class="text-white font-bold text-lg">
+                        Jerry Non-QM
+                    </a>
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="{{ url_for('dashboard.index') }}"
+                           class="{% if request.path in ['/', '/dashboard'] %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                            Dashboard
+                        </a>
+                        <a href="{{ url_for('leads.index') }}"
+                           class="{% if request.path.startswith('/leads') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                            Leads
+                        </a>
+                        <a href="{{ url_for('lists.index') }}"
+                           class="{% if request.path.startswith('/lists') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                            Lists
+                        </a>
+                        <a href="{{ url_for('flyers.index') }}"
+                           class="{% if request.path.startswith('/flyers') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                            Flyers
+                        </a>
+                        <a href="{{ url_for('outreach.setup') }}"
+                           class="{% if request.path.startswith('/outreach') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                            Outreach
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash messages -->
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="rounded-md p-4 mb-3
+            {% if category == 'error' %}bg-red-50 text-red-800
+            {% elif category == 'warning' %}bg-yellow-50 text-yellow-800
+            {% elif category == 'info' %}bg-blue-50 text-blue-800
+            {% else %}bg-green-50 text-green-800{% endif %}">
+            <p class="text-sm font-medium">{{ message }}</p>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main content -->
+    <main>
+        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

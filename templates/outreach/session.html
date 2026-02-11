@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Outreach Session - Jerry Non-QM{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Progress bar -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <h1 class="text-lg font-bold text-gray-900">Outreach: {{ platform|title }}</h1>
+            <span class="text-sm text-gray-500">
+                <span id="progress-current">{{ current }}</span> of <span id="progress-total">{{ total }}</span>
+            </span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                 style="width: {{ (current / total * 100)|int }}%"></div>
+        </div>
+    </div>
+
+    <!-- Lead card -->
+    <div id="lead-card" class="rounded-lg bg-white p-6 shadow mb-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h2 id="lead-name" class="text-xl font-bold text-gray-900">{{ lead.name }}</h2>
+                <p id="lead-company" class="text-gray-600">{{ lead.company }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                    <span id="lead-city">{{ lead.city }}</span>, TX
+                    &middot; Rank #<span id="lead-rank">{{ lead.rank }}</span>
+                    &middot; <span id="lead-volume">{{ lead.volume }}</span>
+                </p>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700">
+                {{ platform|title }}
+            </span>
+        </div>
+
+        <!-- Flyer preview -->
+        {% if flyer %}
+        <div class="mt-4 p-3 bg-gray-50 rounded-md">
+            <p class="text-xs text-gray-500 mb-2">Flyer: {{ flyer.name }}</p>
+            {% if flyer.file_type in ('png', 'jpg', 'jpeg', 'gif') %}
+            <img src="{{ url_for('flyers.preview', flyer_id=flyer.id) }}"
+                 class="max-h-48 object-contain rounded" alt="{{ flyer.name }}">
+            {% else %}
+            <a href="{{ url_for('flyers.preview', flyer_id=flyer.id) }}" target="_blank"
+               class="text-indigo-600 hover:underline text-sm">Open PDF</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex flex-col gap-3">
+        <a id="btn-open" href="{{ profile_url }}" target="_blank"
+           class="flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500">
+            <span>Open Profile</span>
+            <kbd class="rounded bg-indigo-500 px-1.5 py-0.5 text-xs">O</kbd>
+        </a>
+        <div class="grid grid-cols-2 gap-3">
+            <button id="btn-sent" onclick="logAction('sent')"
+                    class="flex items-center justify-center gap-2 rounded-md bg-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-green-500">
+                <span>Sent</span>
+                <kbd class="rounded bg-green-500 px-1.5 py-0.5 text-xs">S</kbd>
+            </button>
+            <button id="btn-skip" onclick="logAction('skipped')"
+                    class="flex items-center justify-center gap-2 rounded-md bg-gray-500 px-6 py-3 text-sm font-medium text-white hover:bg-gray-400">
+                <span>Skip</span>
+                <kbd class="rounded bg-gray-400 px-1.5 py-0.5 text-xs">X</kbd>
+            </button>
+        </div>
+    </div>
+
+    <!-- Keyboard shortcuts hint -->
+    <p class="mt-4 text-center text-xs text-gray-400">
+        Keyboard: <kbd class="rounded border px-1">O</kbd> Open &middot;
+        <kbd class="rounded border px-1">S</kbd> Sent &middot;
+        <kbd class="rounded border px-1">X</kbd> Skip
+    </p>
+</div>
+
+<!-- Hidden data for JS -->
+<input type="hidden" id="session-id" value="{{ sess.id }}">
+<input type="hidden" id="lead-id" value="{{ lead.id }}">
+<input type="hidden" id="summary-url" value="{{ url_for('outreach.summary', session_id=sess.id) }}">
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/outreach.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,25 @@
+/* Minimal custom styles for Jerry Non-QM Outreach */
+
+/* Smooth transitions on progress bars */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Outreach session button press feedback */
+#btn-sent:active,
+#btn-skip:active {
+  transform: scale(0.97);
+}
+
+#btn-sent:disabled,
+#btn-skip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Keyboard shortcut badges */
+kbd {
+  font-family: inherit;
+  font-size: 0.7rem;
+}
