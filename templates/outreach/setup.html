@@ -71,8 +71,60 @@
         </div>
     </div>
 
+    <!-- Template selection -->
+    <div class="mb-6 rounded-lg bg-white p-5 shadow">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">4. Select Message Template (optional)</h2>
+        {% if msg_templates %}
+        <div class="space-y-2" id="template-list">
+            <label class="flex items-center gap-3 rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50 template-option" data-platform="all">
+                <input type="radio" name="template_id" value="" checked class="text-indigo-600">
+                <div>
+                    <p class="font-medium text-gray-900">No Template</p>
+                    <p class="text-xs text-gray-500">Skip message — just open profile and send manually</p>
+                </div>
+            </label>
+            {% for t in msg_templates %}
+            <label class="flex items-center gap-3 rounded-md border border-gray-200 p-3 cursor-pointer hover:bg-gray-50 template-option" data-platform="{{ t.platform }}">
+                <input type="radio" name="template_id" value="{{ t.id }}" class="text-indigo-600">
+                <div>
+                    <p class="font-medium text-gray-900">{{ t.name }}</p>
+                    <p class="text-xs text-gray-500">{{ t.platform|title }} &middot; {{ t.content[:60] }}{% if t.content|length > 60 %}...{% endif %}</p>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No templates created. <a href="{{ url_for('templates.index') }}" class="text-indigo-600 hover:underline">Create one first</a>.</p>
+        {% endif %}
+    </div>
+
     <button type="submit" class="w-full rounded-md bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500">
         Start Outreach Session
     </button>
 </form>
+
+<script>
+// Filter templates when platform selection changes
+document.querySelectorAll('input[name="platform"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        var selected = this.value;
+        document.querySelectorAll('.template-option').forEach(function(opt) {
+            var tp = opt.getAttribute('data-platform');
+            if (tp === 'all' || tp === selected) {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+                // Uncheck hidden templates
+                var inp = opt.querySelector('input[type="radio"]');
+                if (inp && inp.checked) {
+                    document.querySelector('input[name="template_id"][value=""]').checked = true;
+                }
+            }
+        });
+    });
+});
+// Trigger initial filter
+var checkedPlatform = document.querySelector('input[name="platform"]:checked');
+if (checkedPlatform) checkedPlatform.dispatchEvent(new Event('change'));
+</script>
 {% endblock %}

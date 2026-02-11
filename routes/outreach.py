@@ -19,13 +19,15 @@ PLATFORM_COLUMN_MAP = {
 def setup():
     lists = query_db("SELECT * FROM lists ORDER BY created_at DESC")
     flyers = query_db("SELECT * FROM flyers ORDER BY created_at DESC")
-    return render_template("outreach/setup.html", lists=lists, flyers=flyers)
+    msg_templates = query_db("SELECT * FROM message_templates ORDER BY created_at DESC")
+    return render_template("outreach/setup.html", lists=lists, flyers=flyers, msg_templates=msg_templates)
 
 
 @bp.route("/outreach/start", methods=["POST"])
 def start():
     list_id = request.form.get("list_id", type=int)
     flyer_id = request.form.get("flyer_id", type=int)
+    template_id = request.form.get("template_id", type=int)
     platform = request.form.get("platform", "")
 
     if not list_id or not platform:
@@ -59,9 +61,9 @@ def start():
 
     db = get_db()
     cur = db.execute(
-        """INSERT INTO outreach_sessions (list_id, flyer_id, platform, lead_queue, current_index, status)
-           VALUES (?, ?, ?, ?, 0, 'active')""",
-        (list_id, flyer_id, platform, json.dumps(lead_queue)),
+        """INSERT INTO outreach_sessions (list_id, flyer_id, template_id, platform, lead_queue, current_index, status)
+           VALUES (?, ?, ?, ?, ?, 0, 'active')""",
+        (list_id, flyer_id, template_id, platform, json.dumps(lead_queue)),
     )
     session_id = cur.lastrowid
     db.commit()
@@ -89,6 +91,23 @@ def session(session_id):
     if sess["flyer_id"]:
         flyer = query_db("SELECT * FROM flyers WHERE id = ?", (sess["flyer_id"],), one=True)
 
+    # Fetch template and render with lead data
+    template = None
+    rendered_message = ""
+    template_content = ""
+    if sess["template_id"]:
+        template = query_db("SELECT * FROM message_templates WHERE id = ?", (sess["template_id"],), one=True)
+        if template:
+            template_content = template["content"]
+            rendered_message = (
+                template_content
+                .replace("{name}", lead["name"] or "")
+                .replace("{company}", lead["company"] or "")
+                .replace("{city}", lead["city"] or "")
+                .replace("{rank}", str(lead["rank"] or ""))
+                .replace("{volume}", lead["volume"] or "")
+            )
+
     platform = sess["platform"]
     col = PLATFORM_COLUMN_MAP.get(platform, platform)
     profile_url = lead[col] if lead and col in lead.keys() else ""
@@ -102,6 +121,9 @@ def session(session_id):
         current=current_index + 1,
         total=len(lead_queue),
         platform=platform,
+        template=template,
+        rendered_message=rendered_message,
+        template_content=template_content,
     )
 
 

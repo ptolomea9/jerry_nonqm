@@ -60,17 +60,27 @@ CREATE TABLE IF NOT EXISTS flyers (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS message_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    platform TEXT NOT NULL DEFAULT 'all',
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS outreach_sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     list_id INTEGER,
     flyer_id INTEGER,
+    template_id INTEGER,
     platform TEXT NOT NULL,
     lead_queue TEXT DEFAULT '[]',
     current_index INTEGER DEFAULT 0,
     status TEXT DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (list_id) REFERENCES lists(id),
-    FOREIGN KEY (flyer_id) REFERENCES flyers(id)
+    FOREIGN KEY (flyer_id) REFERENCES flyers(id),
+    FOREIGN KEY (template_id) REFERENCES message_templates(id)
 );
 
 CREATE TABLE IF NOT EXISTS outreach_logs (
@@ -107,6 +117,11 @@ def init_db():
     os.makedirs(os.path.dirname(config.DATABASE), exist_ok=True)
     conn = sqlite3.connect(config.DATABASE)
     conn.executescript(SCHEMA)
+    # Migrate: add template_id to outreach_sessions if missing
+    cols = [row[1] for row in conn.execute("PRAGMA table_info(outreach_sessions)").fetchall()]
+    if "template_id" not in cols:
+        conn.execute("ALTER TABLE outreach_sessions ADD COLUMN template_id INTEGER REFERENCES message_templates(id)")
+    conn.commit()
     conn.close()
 
 

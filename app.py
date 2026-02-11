@@ -31,6 +31,7 @@ def create_app():
     from routes.flyers import bp as flyers_bp
     from routes.outreach import bp as outreach_bp
     from routes.api import bp as api_bp
+    from routes.templates import bp as templates_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(leads_bp)
@@ -38,6 +39,7 @@ def create_app():
     app.register_blueprint(flyers_bp)
     app.register_blueprint(outreach_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(templates_bp)
 
     return app
 

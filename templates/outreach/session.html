@@ -57,6 +57,21 @@
             {% endif %}
         </div>
         {% endif %}
+
+        <!-- Message template preview -->
+        {% if template %}
+        <div class="mt-4 p-3 bg-indigo-50 rounded-md">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500">Template: {{ template.name }}</p>
+                <button id="btn-copy-message" onclick="copyMessage()"
+                        class="flex items-center gap-1 rounded-md bg-indigo-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-400">
+                    <span id="copy-message-label">Copy Message</span>
+                    <kbd class="rounded bg-indigo-400 px-1 py-0.5 text-xs">M</kbd>
+                </button>
+            </div>
+            <div id="message-text" class="text-sm text-gray-700 whitespace-pre-wrap">{{ rendered_message }}</div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Action buttons -->
@@ -88,6 +103,7 @@
     <!-- Keyboard shortcuts hint -->
     <p class="mt-4 text-center text-xs text-gray-400">
         Keyboard: <kbd class="rounded border px-1">O</kbd> Open &middot;
+        {% if template %}<kbd class="rounded border px-1">M</kbd> Copy Message &middot;{% endif %}
         <kbd class="rounded border px-1">C</kbd> Copy Flyer &middot;
         <kbd class="rounded border px-1">B</kbd> Back &middot;
         <kbd class="rounded border px-1">S</kbd> Sent &middot;
@@ -99,6 +115,9 @@
 <input type="hidden" id="session-id" value="{{ sess.id }}">
 <input type="hidden" id="lead-id" value="{{ lead.id }}">
 <input type="hidden" id="summary-url" value="{{ url_for('outreach.summary', session_id=sess.id) }}">
+{% if template_content %}
+<input type="hidden" id="template-content" value="{{ template_content }}">
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

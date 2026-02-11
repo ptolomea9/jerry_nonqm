@@ -49,6 +49,13 @@
         const pct = (data.current / parseInt(getEl("progress-total").textContent)) * 100;
         getEl("progress-bar").style.width = pct + "%";
 
+        // Re-render message template with new lead data
+        var tplInput = getEl("template-content");
+        var msgEl = getEl("message-text");
+        if (tplInput && msgEl) {
+          msgEl.textContent = renderTemplate(tplInput.value, lead);
+        }
+
         // Re-enable buttons (Back always enabled after advancing past lead 1)
         getEl("btn-sent").disabled = false;
         getEl("btn-skip").disabled = false;
@@ -63,6 +70,45 @@
         var backBtn = getEl("btn-back");
         if (backBtn) backBtn.disabled = false;
         busy = false;
+      });
+  }
+
+  // Render template with lead data
+  function renderTemplate(template, lead) {
+    return template
+      .replace(/\{name\}/g, lead.name || "")
+      .replace(/\{company\}/g, lead.company || "")
+      .replace(/\{city\}/g, lead.city || "")
+      .replace(/\{rank\}/g, (lead.rank || "").toString())
+      .replace(/\{volume\}/g, lead.volume || "");
+  }
+
+  // Copy rendered message to clipboard
+  function copyMessage() {
+    var msgEl = getEl("message-text");
+    var btn = getEl("btn-copy-message");
+    var label = getEl("copy-message-label");
+    if (!msgEl || !btn) return;
+
+    var text = msgEl.textContent;
+    navigator.clipboard
+      .writeText(text)
+      .then(function () {
+        label.textContent = "Copied!";
+        btn.classList.remove("bg-indigo-500", "hover:bg-indigo-400");
+        btn.classList.add("bg-green-500");
+        setTimeout(function () {
+          label.textContent = "Copy Message";
+          btn.classList.remove("bg-green-500");
+          btn.classList.add("bg-indigo-500", "hover:bg-indigo-400");
+        }, 2000);
+      })
+      .catch(function (err) {
+        console.error("Clipboard copy failed:", err);
+        label.textContent = "Failed";
+        setTimeout(function () {
+          label.textContent = "Copy Message";
+        }, 2000);
       });
   }
 
@@ -148,6 +194,13 @@
         var pct = (data.current / parseInt(getEl("progress-total").textContent)) * 100;
         getEl("progress-bar").style.width = pct + "%";
 
+        // Re-render message template with previous lead data
+        var tplInput = getEl("template-content");
+        var msgEl = getEl("message-text");
+        if (tplInput && msgEl) {
+          msgEl.textContent = renderTemplate(tplInput.value, lead);
+        }
+
         // Re-enable buttons; disable Back if at first lead
         getEl("btn-sent").disabled = false;
         getEl("btn-skip").disabled = false;
@@ -166,6 +219,7 @@
   // Expose to onclick handlers
   window.logAction = logAction;
   window.copyFlyer = copyFlyer;
+  window.copyMessage = copyMessage;
   window.goBack = goBack;
 
   // Keyboard shortcuts
@@ -182,6 +236,9 @@
         break;
       case "o":
         getEl("btn-open").click();
+        break;
+      case "m":
+        copyMessage();
         break;
       case "c":
         copyFlyer();

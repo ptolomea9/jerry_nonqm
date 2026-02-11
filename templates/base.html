@@ -34,6 +34,10 @@
                            class="{% if request.path.startswith('/flyers') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
                             Flyers
                         </a>
+                        <a href="{{ url_for('templates.index') }}"
+                           class="{% if request.path.startswith('/templates') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                            Templates
+                        </a>
                         <a href="{{ url_for('outreach.setup') }}"
                            class="{% if request.path.startswith('/outreach') %}bg-indigo-800 text-white{% else %}text-indigo-200 hover:bg-indigo-600 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium">
                             Outreach
