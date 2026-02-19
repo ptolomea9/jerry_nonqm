@@ -196,16 +196,16 @@
         <tbody class="divide-y divide-gray-50">
             {% for lead in leads %}
             <tr class="hover:bg-gray-50/50 transition-colors duration-100">
-                <td class="px-4 py-3 text-sm text-gray-400 font-medium">{{ lead.rank }}</td>
+                <td class="px-4 py-3 text-sm text-gray-400 font-medium">{{ lead.rank or '' }}</td>
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">
-                    {{ lead.name }}
+                    {{ lead.name or '' }}
                     {% if lead.lo_role %}
                     <span class="ml-1 inline-flex items-center rounded-md bg-gray-50 px-1.5 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-gray-200">{{ lead.lo_role }}</span>
                     {% endif %}
                 </td>
-                <td class="px-4 py-3 text-sm text-gray-500">{{ lead.company }}</td>
-                <td class="px-4 py-3 text-sm text-gray-500">{{ lead.city }}</td>
-                <td class="px-4 py-3 text-sm text-gray-600 font-medium">{{ lead.volume }}</td>
+                <td class="px-4 py-3 text-sm text-gray-500">{{ lead.company or '' }}</td>
+                <td class="px-4 py-3 text-sm text-gray-500">{{ lead.city or '' }}</td>
+                <td class="px-4 py-3 text-sm text-gray-600 font-medium">{{ lead.volume or '' }}</td>
                 <td class="px-4 py-3 text-center">
                     <div class="flex items-center justify-center gap-1 flex-wrap">
                         {% set channels = [
