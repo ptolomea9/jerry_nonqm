@@ -94,13 +94,41 @@
     </form>
 </div>
 
+<!-- Archive tabs -->
+<div class="mb-4 flex gap-1 rounded-xl bg-white p-1 shadow-sm ring-1 ring-gray-100">
+    <a href="?search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}&list_id={{ list_id }}"
+       class="rounded-lg px-4 py-2 text-sm font-semibold transition-colors {% if show_archived == '' %}bg-indigo-600 text-white{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+        Active Leads
+    </a>
+    <a href="?search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}&list_id={{ list_id }}&show_archived=only"
+       class="rounded-lg px-4 py-2 text-sm font-semibold transition-colors {% if show_archived == 'only' %}bg-indigo-600 text-white{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+        Contacted{% if archived_count %} <span class="ml-1 inline-flex items-center rounded-full {% if show_archived == 'only' %}bg-white/20{% else %}bg-indigo-100 text-indigo-700{% endif %} px-2 py-0.5 text-xs font-bold">{{ archived_count }}</span>{% endif %}
+    </a>
+    <a href="?search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}&list_id={{ list_id }}&show_archived=all"
+       class="rounded-lg px-4 py-2 text-sm font-semibold transition-colors {% if show_archived == 'all' %}bg-indigo-600 text-white{% else %}text-gray-600 hover:bg-gray-100{% endif %}">
+        All
+    </a>
+</div>
+
 <!-- Filters -->
 <form method="get" class="mb-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    {% if show_archived %}
+    <input type="hidden" name="show_archived" value="{{ show_archived }}">
+    {% endif %}
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Search</label>
             <input type="text" name="search" value="{{ search }}" placeholder="Name or company..."
                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">List</label>
+            <select name="list_id" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                <option value="">All Lists</option>
+                {% for lst in lists %}
+                <option value="{{ lst.id }}" {% if list_id == lst.id|string %}selected{% endif %}>{{ lst.name }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Platform</label>
@@ -171,7 +199,9 @@
                 <td class="px-4 py-3 text-sm text-gray-400 font-medium">{{ lead.rank }}</td>
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">
                     {{ lead.name }}
+                    {% if lead.lo_role %}
                     <span class="ml-1 inline-flex items-center rounded-md bg-gray-50 px-1.5 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-gray-200">{{ lead.lo_role }}</span>
+                    {% endif %}
                 </td>
                 <td class="px-4 py-3 text-sm text-gray-500">{{ lead.company }}</td>
                 <td class="px-4 py-3 text-sm text-gray-500">{{ lead.city }}</td>
@@ -209,14 +239,14 @@
     <p class="text-sm font-medium text-gray-400">Page {{ page }} of {{ total_pages }}</p>
     <div class="flex gap-2">
         {% if page > 1 %}
-        <a href="?page={{ page - 1 }}&search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}"
+        <a href="?page={{ page - 1 }}&search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}&list_id={{ list_id }}&show_archived={{ show_archived }}"
            class="inline-flex items-center gap-1 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 transition-colors">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Previous
         </a>
         {% endif %}
         {% if page < total_pages %}
-        <a href="?page={{ page + 1 }}&search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}"
+        <a href="?page={{ page + 1 }}&search={{ search }}&platform={{ platform }}&role={{ role }}&city={{ city }}&sort={{ sort }}&list_id={{ list_id }}&show_archived={{ show_archived }}"
            class="inline-flex items-center gap-1 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 transition-colors">
             Next
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>

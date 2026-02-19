@@ -16,7 +16,7 @@ def enrich_list(list_id):
     try:
         # Get leads in this list that need enrichment
         leads = conn.execute(
-            """SELECT l.id, l.nmlsid, l.company, l.company_website
+            """SELECT l.id, l.nmlsid, l.name, l.company, l.company_website
                FROM leads l
                JOIN list_leads ll ON l.id = ll.lead_id
                WHERE ll.list_id = ?""",
@@ -40,7 +40,7 @@ def enrich_list(list_id):
 
                 url_cache = load_url_cache()
                 for i, lead in enumerate(needs_url):
-                    company = lead["company"]
+                    company = lead["company"] or lead["name"]
                     if company not in url_cache:
                         url = search_company_url(company)
                         url_cache[company] = url
@@ -62,7 +62,7 @@ def enrich_list(list_id):
 
         # Refresh leads data after URL enrichment
         leads = conn.execute(
-            """SELECT l.id, l.nmlsid, l.company, l.company_website
+            """SELECT l.id, l.nmlsid, l.name, l.company, l.company_website
                FROM leads l
                JOIN list_leads ll ON l.id = ll.lead_id
                WHERE ll.list_id = ?""",
@@ -123,7 +123,7 @@ def enrich_list(list_id):
 
             # Refresh leads for email stage
             leads = conn.execute(
-                """SELECT l.id, l.company, l.company_website, l.email
+                """SELECT l.id, l.name, l.company, l.company_website, l.email
                    FROM leads l
                    JOIN list_leads ll ON l.id = ll.lead_id
                    WHERE ll.list_id = ?""",
@@ -135,7 +135,7 @@ def enrich_list(list_id):
                     continue
 
                 website = lead["company_website"]
-                company = lead["company"]
+                company = lead["company"] or lead["name"]
                 key = website if website else f"__no_website__{company}"
 
                 if key not in email_cache:

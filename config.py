@@ -9,4 +9,4 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-jerry-nonqm-secret-key")
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
 
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
-ALLOWED_CSV_EXTENSIONS = {"csv"}
+ALLOWED_CSV_EXTENSIONS = {"csv", "xlsx"}

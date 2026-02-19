@@ -41,6 +41,19 @@ COLUMN_MAP = {
     "TikTok": "tiktok",
 }
 
+# Mapping for XLSX company-level broker files
+XLSX_COLUMN_MAP = {
+    "Company NMLS": "nmlsid",
+    "Company Name": "name",
+    "Address.City": "city",
+    "Address.State": "state",
+    "Brokered Non-QM Volume": "volume",
+    "Brokered Non-QM Units": "units",
+    "Total Brokered Volume": "volume_export",
+    "Wholesale Account Executive": "lo_role",
+    "Wholesale Account Status": "type",
+}
+
 
 def import_csv(csv_path=INPUT_CSV):
     init_db()

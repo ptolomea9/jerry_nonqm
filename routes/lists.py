@@ -9,6 +9,47 @@ from models import get_db, query_db
 bp = Blueprint("lists", __name__)
 
 
+def _parse_upload(filepath):
+    """Parse a CSV or XLSX file, returning (header, rows) as lists of strings."""
+    ext = os.path.splitext(filepath)[1].lower()
+
+    if ext == ".xlsx":
+        from openpyxl import load_workbook
+
+        def _cell_to_str(val):
+            if val is None:
+                return ""
+            if isinstance(val, float) and val == int(val):
+                return str(int(val))
+            return str(val)
+
+        wb = load_workbook(filepath, read_only=True, data_only=True)
+        ws = wb.active
+        rows_iter = ws.iter_rows()
+        header = [_cell_to_str(cell.value) for cell in next(rows_iter)]
+        rows = []
+        for row in rows_iter:
+            rows.append([_cell_to_str(cell.value) for cell in row])
+        wb.close()
+        return header, rows
+    else:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            rows = list(reader)
+        return header, rows
+
+
+def _pick_column_map(header):
+    """Auto-detect which column map has more header matches."""
+    from import_csv import COLUMN_MAP, XLSX_COLUMN_MAP
+
+    csv_hits = sum(1 for col in COLUMN_MAP if col in header)
+    xlsx_hits = sum(1 for col in XLSX_COLUMN_MAP if col in header)
+
+    return XLSX_COLUMN_MAP if xlsx_hits > csv_hits else COLUMN_MAP
+
+
 @bp.route("/lists")
 def index():
     lists = query_db("SELECT * FROM lists ORDER BY created_at DESC")
@@ -26,8 +67,9 @@ def upload():
         flash("No file selected", "error")
         return redirect(url_for("lists.index"))
 
-    if not file.filename.lower().endswith(".csv"):
-        flash("Only CSV files are allowed", "error")
+    ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
+    if ext not in config.ALLOWED_CSV_EXTENSIONS:
+        flash("Only CSV and XLSX files are allowed", "error")
         return redirect(url_for("lists.index"))
 
     list_name = request.form.get("list_name", "").strip() or file.filename
@@ -38,19 +80,19 @@ def upload():
     filepath = os.path.join(config.UPLOAD_FOLDER_CSV, stored_name)
     file.save(filepath)
 
-    # Parse CSV and import leads
+    # Parse file (CSV or XLSX)
     try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            rows = list(reader)
+        header, rows = _parse_upload(filepath)
     except Exception as e:
-        flash(f"Error reading CSV: {e}", "error")
+        flash(f"Error reading file: {e}", "error")
         return redirect(url_for("lists.index"))
 
     db = get_db()
 
-    # Determine if this CSV has enrichment columns
+    # Auto-detect column map
+    active_map = _pick_column_map(header)
+
+    # Determine enrichment status from headers
     has_website = "Company Website" in header
     has_socials = "Facebook" in header
     enrichment_status = "complete" if (has_website and has_socials) else "none"
@@ -62,15 +104,31 @@ def upload():
     )
     list_id = cur.lastrowid
 
-    # Column mapping
-    from import_csv import COLUMN_MAP
-
+    # Build column index mapping
     col_indices = {}
-    for csv_col, db_col in COLUMN_MAP.items():
+    for csv_col, db_col in active_map.items():
         if csv_col in header:
             col_indices[header.index(csv_col)] = db_col
 
-    db_columns = list(col_indices.values())
+    if not col_indices:
+        db.commit()
+        flash(f"Warning: No matching columns found. Created list with 0 leads.", "error")
+        return redirect(url_for("lists.detail", list_id=list_id))
+
+    # Find which column maps to nmlsid
+    nmlsid_idx = None
+    for idx, db_col in col_indices.items():
+        if db_col == "nmlsid":
+            nmlsid_idx = idx
+            break
+
+    if nmlsid_idx is None:
+        db.commit()
+        flash("Error: No NMLSID column found in file", "error")
+        return redirect(url_for("lists.detail", list_id=list_id))
+
+    sorted_indices = sorted(col_indices.keys())
+    db_columns = [col_indices[idx] for idx in sorted_indices]
     placeholders = ", ".join(["?"] * len(db_columns))
     col_names = ", ".join(db_columns)
     update_cols = [c for c in db_columns if c != "nmlsid"]
@@ -82,24 +140,32 @@ def upload():
         ON CONFLICT(nmlsid) DO UPDATE SET {update_set}
     """
 
-    nmlsid_idx = header.index("NMLSID") if "NMLSID" in header else None
     lead_ids = []
 
     for row in rows:
+        # Skip rows with blank/missing nmlsid
+        nmlsid_val = row[nmlsid_idx] if nmlsid_idx < len(row) else ""
+        if not nmlsid_val or nmlsid_val.strip() == "" or nmlsid_val == "None":
+            continue
+
         values = []
-        for idx in sorted(col_indices.keys()):
+        for idx in sorted_indices:
             val = row[idx] if idx < len(row) else ""
+            # Clean "None" string values from XLSX
+            if val == "None":
+                val = ""
             values.append(val)
 
         try:
             db.execute(insert_sql, values)
-            if nmlsid_idx is not None:
-                nmlsid = row[nmlsid_idx]
-                lead_row = db.execute("SELECT id FROM leads WHERE nmlsid = ?", (nmlsid,)).fetchone()
-                if lead_row:
-                    lead_ids.append(lead_row["id"])
+            lead_row = db.execute("SELECT id FROM leads WHERE nmlsid = ?", (nmlsid_val.strip(),)).fetchone()
+            if lead_row:
+                lead_ids.append(lead_row["id"])
         except Exception as e:
             print(f"  Error importing row: {e}")
+
+    # Update row_count with actual leads linked
+    db.execute("UPDATE lists SET row_count = ? WHERE id = ?", (len(lead_ids), list_id))
 
     for lead_id in lead_ids:
         db.execute("INSERT OR IGNORE INTO list_leads (list_id, lead_id) VALUES (?, ?)", (list_id, lead_id))
@@ -125,6 +191,22 @@ def detail(list_id):
     )
 
     return render_template("lists/detail.html", lst=lst, leads=leads)
+
+
+@bp.route("/lists/<int:list_id>/delete", methods=["POST"])
+def delete(list_id):
+    lst = query_db("SELECT * FROM lists WHERE id = ?", (list_id,), one=True)
+    if not lst:
+        flash("List not found", "error")
+        return redirect(url_for("lists.index"))
+
+    db = get_db()
+    db.execute("DELETE FROM list_leads WHERE list_id = ?", (list_id,))
+    db.execute("DELETE FROM lists WHERE id = ?", (list_id,))
+    db.commit()
+
+    flash(f"Deleted list '{lst['name']}'", "success")
+    return redirect(url_for("lists.index"))
 
 
 @bp.route("/lists/<int:list_id>/enrich", methods=["POST"])

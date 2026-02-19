@@ -15,6 +15,8 @@ def index():
     role = request.args.get("role", "")
     city = request.args.get("city", "")
     sort = request.args.get("sort", "rank")
+    list_id = request.args.get("list_id", "", type=str)
+    show_archived = request.args.get("show_archived", "")
 
     where_clauses = []
     params = []
@@ -37,6 +39,19 @@ def index():
     if city:
         where_clauses.append("leads.city = ?")
         params.append(city)
+
+    if list_id:
+        where_clauses.append("leads.id IN (SELECT lead_id FROM list_leads WHERE list_id = ?)")
+        params.append(int(list_id))
+
+    # Archive filter
+    if show_archived == "only":
+        where_clauses.append("leads.id IN (SELECT DISTINCT lead_id FROM outreach_logs WHERE result = 'sent')")
+    elif show_archived == "all":
+        pass  # no filter
+    else:
+        # Default: exclude contacted leads
+        where_clauses.append("leads.id NOT IN (SELECT DISTINCT lead_id FROM outreach_logs WHERE result = 'sent')")
 
     where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
 
@@ -61,6 +76,15 @@ def index():
     # Get distinct cities for filter dropdown
     cities = query_db("SELECT DISTINCT city FROM leads WHERE city != '' ORDER BY city")
 
+    # Get lists for filter dropdown
+    lists = query_db("SELECT id, name FROM lists ORDER BY name")
+
+    # Count contacted leads (for tab badge)
+    archived_count = query_db(
+        "SELECT COUNT(DISTINCT lead_id) as c FROM outreach_logs WHERE result = 'sent'",
+        one=True,
+    )["c"]
+
     return render_template(
         "leads/index.html",
         leads=leads,
@@ -73,6 +97,10 @@ def index():
         city=city,
         sort=sort,
         cities=cities,
+        lists=lists,
+        list_id=list_id,
+        show_archived=show_archived,
+        archived_count=archived_count,
     )
 
 
