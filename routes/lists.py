@@ -40,6 +40,22 @@ def _parse_upload(filepath):
         return header, rows
 
 
+def _format_volume(val):
+    """Format raw volume number to $X.XM display format."""
+    if not val or val == "None":
+        return ""
+    try:
+        num = float(val.replace(",", "").replace("$", ""))
+        if num >= 1_000_000:
+            return f"${num / 1_000_000:.1f}M"
+        elif num >= 1_000:
+            return f"${num / 1_000:.0f}K"
+        else:
+            return f"${num:,.0f}"
+    except (ValueError, AttributeError):
+        return val
+
+
 def _pick_column_map(header):
     """Auto-detect which column map has more header matches."""
     from import_csv import COLUMN_MAP, XLSX_COLUMN_MAP
@@ -154,6 +170,10 @@ def upload():
             # Clean "None" string values from XLSX
             if val == "None":
                 val = ""
+            # Format volume columns for display
+            db_col = col_indices[idx]
+            if db_col in ("volume", "volume_export") and val:
+                val = _format_volume(val)
             values.append(val)
 
         try:
@@ -169,6 +189,14 @@ def upload():
 
     for lead_id in lead_ids:
         db.execute("INSERT OR IGNORE INTO list_leads (list_id, lead_id) VALUES (?, ?)", (list_id, lead_id))
+
+    # For company-level imports (XLSX): copy company name to name field if not mapped
+    if "company" in db_columns and "name" not in db_columns:
+        for lead_id in lead_ids:
+            db.execute(
+                "UPDATE leads SET name = company WHERE id = ? AND (name IS NULL OR name = '')",
+                (lead_id,),
+            )
 
     db.commit()
     flash(f"Imported {len(lead_ids)} leads into '{list_name}'", "success")

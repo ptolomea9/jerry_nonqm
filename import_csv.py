@@ -44,12 +44,12 @@ COLUMN_MAP = {
 # Mapping for XLSX company-level broker files
 XLSX_COLUMN_MAP = {
     "Company NMLS": "nmlsid",
-    "Company Name": "name",
+    "Company Name": "company",
     "Address.City": "city",
     "Address.State": "state",
-    "Brokered Non-QM Volume": "volume",
-    "Brokered Non-QM Units": "units",
-    "Total Brokered Volume": "volume_export",
+    "Brokered Non-QM Volume (Last 13 Months)": "volume",
+    "Brokered Non-QM Units (Last 13 Months)": "units",
+    "Total Brokered Volume (Last 13 Months)": "volume_export",
     "Wholesale Account Executive": "lo_role",
     "Wholesale Account Status": "type",
 }
